@@ -10,6 +10,9 @@ run problem:
 run-all:
     @find {{invocation_directory()}} -name "codyssi*.py" -exec python3 -O {} \;
 
+table:
+    @python3 -m codyssi.table README.md
+
 flake8:
     @echo "Running flake"
     @flake8 {{invocation_directory()}}
