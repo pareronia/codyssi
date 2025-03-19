@@ -11,7 +11,7 @@
 |[4](https://www.codyssi.com/view_problem_4)|[✓](codyssi04.py)|
 |[5](https://www.codyssi.com/view_problem_5)|[✓](codyssi05.py)|
 |[6](https://www.codyssi.com/view_problem_6)|[✓](codyssi06.py)|
-|[7](https://www.codyssi.com/view_problem_7)||
+|[7](https://www.codyssi.com/view_problem_7)|[✓](codyssi07.py)|
 |[8](https://www.codyssi.com/view_problem_8)||
 |[9](https://www.codyssi.com/view_problem_9)||
 |[10](https://www.codyssi.com/view_problem_10)||
