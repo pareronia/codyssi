@@ -5,14 +5,14 @@
 <!-- @BEGIN:Problems -->
 | Problem | python3 |
 | --- | --- |
-|[1](https://www.codyssi.com/view_problem_1)|[✓](codyssi01.py)|
-|[2](https://www.codyssi.com/view_problem_2)|[✓](codyssi02.py)|
-|[3](https://www.codyssi.com/view_problem_3)|[✓](codyssi03.py)|
-|[4](https://www.codyssi.com/view_problem_4)|[✓](codyssi04.py)|
-|[5](https://www.codyssi.com/view_problem_5)|[✓](codyssi05.py)|
-|[6](https://www.codyssi.com/view_problem_6)|[✓](codyssi06.py)|
-|[7](https://www.codyssi.com/view_problem_7)|[✓](codyssi07.py)|
-|[8](https://www.codyssi.com/view_problem_8)|[✓](codyssi08.py)|
+|[1](https://www.codyssi.com/view_problem_1)|[✓](src/codyssi01.py)|
+|[2](https://www.codyssi.com/view_problem_2)|[✓](src/codyssi02.py)|
+|[3](https://www.codyssi.com/view_problem_3)|[✓](src/codyssi03.py)|
+|[4](https://www.codyssi.com/view_problem_4)|[✓](src/codyssi04.py)|
+|[5](https://www.codyssi.com/view_problem_5)|[✓](src/codyssi05.py)|
+|[6](https://www.codyssi.com/view_problem_6)|[✓](src/codyssi06.py)|
+|[7](https://www.codyssi.com/view_problem_7)|[✓](src/codyssi07.py)|
+|[8](https://www.codyssi.com/view_problem_8)|[✓](src/codyssi08.py)|
 |[9](https://www.codyssi.com/view_problem_9)||
 |[10](https://www.codyssi.com/view_problem_10)||
 |[11](https://www.codyssi.com/view_problem_11)||

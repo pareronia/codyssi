@@ -2,7 +2,7 @@ import os
 
 
 def get_py(problem: int) -> str:
-    path = os.path.join(f"codyssi{problem:02}.py")
+    path = os.path.join(f"src/codyssi{problem:02}.py")
     return f"[✓]({path})" if os.path.exists(path) else ""
 
 
