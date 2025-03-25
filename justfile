@@ -1,42 +1,52 @@
 alias r := run
 alias l := lint
 
-source_dir := justfile_directory() + "/src"
-pythonpath := "PYTHONPATH=" + source_dir
-python3 := "python3 -O"
+source_dir := join(".", "src")
+pythonpath := "PYTHONPATH=\"" + source_dir + "\""
+python := if os_family() == "windows" { "python -O" } else { "python3 -O" }
 
 default:
     @just --choose
 
+# Run Problem by number
 run problem:
-    @{{python3}} {{source_dir}}/$(printf "codyssi%02d.py" {{problem}})
+    @{{pythonpath}} {{python}} -m codyssi.runner --problem {{problem}}
 
+# Run all Problems
 run-all:
-    @find {{source_dir}} -name "codyssi*.py" -exec {{python3}} {} \;
+    @{{pythonpath}} {{python}} -m codyssi.runner --all
 
+# Regenerate table
 table:
-    @{{pythonpath}} {{python3}} -m codyssi.table README.md
+    @{{pythonpath}} {{python}} -m codyssi.table README.md
 
+# Linting: flake8
 flake8:
-    @echo "Running flake"
-    @flake8 {{source_dir}}
+    @echo "Running flake8"
+    @flake8 "{{source_dir}}"
 
+# Linting: bandit - security analyzer
 bandit:
     @echo "Running bandit"
-    @bandit --configfile pyproject.toml --quiet --recursive {{source_dir}}
+    @bandit --configfile pyproject.toml --quiet --recursive "{{source_dir}}"
 
+# Linting: vulture - unused code
 vulture:
     @echo "Running vulture"
-    @vulture {{source_dir}}
+    @vulture "{{source_dir}}"
 
+# Linting: black - code formating
 black-check:
     @echo "Running black check"
-    @black --quiet --diff --color --check {{source_dir}}
+    @black --quiet --diff --color --check "{{source_dir}}"
 
+# Linting: mypy - type formating
 mypy:
     @echo "Running mypy"
-    @mypy --no-error-summary {{source_dir}}
+    @mypy --no-error-summary "{{source_dir}}"
 
+# Linting: all
 lint: flake8 vulture bandit black-check mypy
 
+# git hook
 pre-push: lint

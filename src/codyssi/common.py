@@ -14,9 +14,11 @@ from typing import TypeVar
 from typing import cast
 
 from prettyprinter import cpprint
-from termcolor import colored
 
 import codyssi.memo as memo
+from codyssi.format import fmt_answer
+from codyssi.format import fmt_duration
+from codyssi.format import fmt_title
 
 
 def clog(c: Callable[[], object]) -> None:
@@ -67,16 +69,6 @@ class SolutionBase(ABC, Generic[OUTPUT1, OUTPUT2, OUTPUT3]):
         def __str__(self) -> str:
             return str(self._value_)
 
-        def int_value(self) -> int:
-            return int(self._value_)
-
-        @classmethod
-        def from_str(_cls, part: str) -> SolutionBase.Part:
-            for v in SolutionBase.Part:
-                if v._value_ == part:
-                    return v
-            raise ValueError
-
     class PartExecution(NamedTuple):
         part: SolutionBase.Part
         answer: Any = None
@@ -87,21 +79,13 @@ class SolutionBase(ABC, Generic[OUTPUT1, OUTPUT2, OUTPUT3]):
         def duration_as_ms(self) -> float:
             return self.duration / 1_000_000
 
-        def __repr__(self) -> str:
-            if self.no_input:
-                return f"Part {self.part}: == NO INPUT FOUND =="
-            answer = colored(self.answer, "white", attrs=["bold"])
-            if self.duration_as_ms <= 1_000:
-                duration = f"{self.duration_as_ms:.3f}"
-            elif self.duration_as_ms <= 5_000:
-                duration = colored(f"{self.duration_as_ms:.0f}", "yellow")
-            else:
-                duration = colored(f"{self.duration_as_ms:.0f}", "red")
-            return f"Part {self.part}: {answer}, took {duration} ms"
-
     def __init__(self, problem: int):
         self.problem = Problem(problem)
-        self.callables = {"1": self.part_1, "2": self.part_2, "3": self.part_3}
+        self.callables = {
+            SolutionBase.Part.PART_1: self.part_1,
+            SolutionBase.Part.PART_2: self.part_2,
+            SolutionBase.Part.PART_3: self.part_3,
+        }
 
     @abstractmethod
     def samples(self) -> None:
@@ -119,34 +103,31 @@ class SolutionBase(ABC, Generic[OUTPUT1, OUTPUT2, OUTPUT3]):
     def part_3(self, input: InputData) -> OUTPUT3:
         pass
 
+    def run_part(self, part: SolutionBase.Part) -> SolutionBase.PartExecution:
+        input = self.problem.get_input()
+        if input is None:
+            return SolutionBase.PartExecution(part, no_input=True)
+        else:
+            start = time.time()
+            answer = self.callables[part](input)
+            return SolutionBase.PartExecution(
+                part, answer, int((time.time() - start) * 1e9)
+            )
+
     def run(self, main_args: list[str]) -> None:  # noqa E103
-        def execute_part(
-            part: SolutionBase.Part, f: Callable[[InputData], Any]
-        ) -> SolutionBase.PartExecution:
-            input = self.problem.get_input()
-            if input is None:
-                result = SolutionBase.PartExecution(part, no_input=True)
-            else:
-                start = time.time()
-                answer = f(input)
-                result = SolutionBase.PartExecution(
-                    part, answer, int((time.time() - start) * 1e9)
-                )
-            print(result)
-            return result
-
-        header = colored(
-            f"codyssi Problem {self.problem.problem}",
-            "yellow",
-        )
         print()
-        print(header)
+        print(fmt_title(self.problem.problem))
         print()
-
         if __debug__:
             self.samples()
-        for part in ["1", "2", "3"]:
-            execute_part(self.Part.from_str(part), self.callables[part])
+        for part in SolutionBase.Part:
+            result = self.run_part(part)
+            if result.no_input:
+                print(f"Part {part}: == NO INPUT FOUND ==")
+            else:
+                answer = fmt_answer(result.answer)
+                duration = fmt_duration(result.duration_as_ms)
+                print(f"Part {part}: {answer}, took {duration}")
 
 
 F = TypeVar("F", bound=Callable[..., Any])
