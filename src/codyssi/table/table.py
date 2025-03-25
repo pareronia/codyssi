@@ -8,9 +8,9 @@ def get_py(problem: int) -> str:
 
 def main(file_name: str) -> None:
     url = "https://www.codyssi.com/view_problem_"
-    with open(file_name, "r") as f:
+    with open(file_name, "r", encoding="utf-8") as f:
         tmp = f.read()
-    with open(file_name, "w") as f:
+    with open(file_name, "w", encoding="utf-8") as f:
         in_table = False
         for line in tmp.splitlines():
             if line.startswith("<!-- @BEGIN:Problems"):
