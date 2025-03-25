@@ -1,8 +1,10 @@
+set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
+
 alias r := run
 alias l := lint
 
 source_dir := join(".", "src")
-pythonpath := "PYTHONPATH=\"" + source_dir + "\""
+export PYTHONPATH := source_dir
 python := if os_family() == "windows" { "python -O" } else { "python3 -O" }
 
 default:
@@ -10,15 +12,15 @@ default:
 
 # Run Problem by number
 run problem:
-    @{{pythonpath}} {{python}} -m codyssi.runner --problem {{problem}}
+    @{{python}} -m codyssi.runner --problem {{problem}}
 
 # Run all Problems
 run-all:
-    @{{pythonpath}} {{python}} -m codyssi.runner --all
+    @{{python}} -m codyssi.runner --all
 
 # Regenerate table
 table:
-    @{{pythonpath}} {{python}} -m codyssi.table README.md
+    @{{python}} -m codyssi.table README.md
 
 # Linting: flake8
 flake8:
