@@ -1,5 +1,8 @@
 import sys
 
-from .table import main
+from .. import CONFIG
+from .table import Table
 
-main(sys.argv[1])
+number_of_problems = CONFIG.get_number_of_problems()
+
+Table(number_of_problems).generate(sys.argv[1])

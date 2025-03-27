@@ -22,4 +22,7 @@
 |[15](https://www.codyssi.com/view_problem_15)|[✓](src/codyssi15.py)|
 |[16](https://www.codyssi.com/view_problem_16)||
 |[17](https://www.codyssi.com/view_problem_17)||
+|[18](https://www.codyssi.com/view_problem_18)||
+|[19](https://www.codyssi.com/view_problem_19)||
+|[20](https://www.codyssi.com/view_problem_20)||
 <!-- @END:Problems -->

@@ -50,3 +50,5 @@ dev = [
     "vulture>=2.14",
 ]
 
+[tool.codyssi.table]
+number_of_problems = 20
