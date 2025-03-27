@@ -18,6 +18,7 @@ TEST = """\
 Output1 = int
 Output2 = int
 Output3 = str
+BASE_65 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#"
 
 
 class Solution(SolutionBase[Output1, Output2, Output3]):
@@ -38,15 +39,7 @@ class Solution(SolutionBase[Output1, Output2, Output3]):
         ans = ""
         tot = self.get_sum(input)
         while tot > 0:
-            mod = tot % 65
-            if mod < 10:
-                ans += str(mod)
-            elif 10 <= mod < 36:
-                ans += chr(ord("A") + mod - 10)
-            elif 36 <= mod < 62:
-                ans += chr(ord("a") + mod - 36)
-            else:
-                ans += ["!", "@", "#"][mod - 62]
+            ans += BASE_65[tot % 65]
             tot //= 65
         return ans[::-1]
 
