@@ -20,7 +20,7 @@
 |[13](https://www.codyssi.com/view_problem_13)|[✓](src/codyssi13.py)|
 |[14](https://www.codyssi.com/view_problem_14)|[✓](src/codyssi14.py)|
 |[15](https://www.codyssi.com/view_problem_15)|[✓](src/codyssi15.py)|
-|[16](https://www.codyssi.com/view_problem_16)||
+|[16](https://www.codyssi.com/view_problem_16)|[✓](src/codyssi16.py)|
 |[17](https://www.codyssi.com/view_problem_17)||
 |[18](https://www.codyssi.com/view_problem_18)||
 |[19](https://www.codyssi.com/view_problem_19)||
