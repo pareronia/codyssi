@@ -1,8 +1,8 @@
 import sys
 from collections import defaultdict
-from collections.abc import Iterator
 from queue import PriorityQueue
 from typing import Callable
+from typing import Iterator
 from typing import TypeVar
 
 T = TypeVar("T")
@@ -37,3 +37,24 @@ def dijkstra(
                 parent[n] = node
                 q.put((new_cost, n))
     return cost, best, path
+
+
+def find_cycles(
+    edges: dict[str, set[tuple[str, int]]], nodes: set[str]
+) -> Iterator[list[str]]:
+    def dfs(path: list[str]) -> Iterator[list[str]]:
+        nn: set[tuple[str, int]] = edges.get(path[-1], set())
+        for n, _ in nn:
+            try:
+                i = path.index(n)
+                yield path[i:]
+            except ValueError:
+                yield from dfs(path[:] + [n])
+
+    seen = set[tuple[str]]()
+    for node in nodes:
+        for c in dfs([node]):
+            s = tuple(_ for _ in sorted(c))
+            if s not in seen:
+                seen.add(s)
+                yield c

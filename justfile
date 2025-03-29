@@ -1,9 +1,11 @@
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 
-alias r := run
 alias l := lint
+alias r := run-all
+alias t := test
 
-source_dir := join(".", "src")
+source_dir := join(".", "src", "main")
+test_dir := join(".", "src", "test")
 export PYTHONPATH := source_dir
 python := if os_family() == "windows" { "python -O" } else { "python3 -O" }
 
@@ -17,6 +19,10 @@ run problem:
 # Run all Problems
 run-all:
     @{{python}} -m codyssi.runner --all
+
+# Run tests
+test:
+    @{{python}} -m unittest discover -s "{{test_dir}}"
 
 # Regenerate table
 table:
@@ -51,4 +57,4 @@ mypy:
 lint: flake8 vulture bandit black-check mypy
 
 # git hook
-pre-push: lint
+pre-push: lint test

@@ -6,7 +6,7 @@ class Table:
         self.number_of_problems = number_of_problems
 
     def get_py(self, problem: int) -> str:
-        path = os.path.join(f"src/codyssi{problem:02}.py")
+        path = os.path.join("src", "main", f"codyssi{problem:02}.py")
         return f"[✓]({path})" if os.path.exists(path) else ""
 
     def generate(self, file_name: str) -> None:
