@@ -23,6 +23,6 @@
 |[16](https://www.codyssi.com/view_problem_16)|[✓](src/main/codyssi16.py)|
 |[17](https://www.codyssi.com/view_problem_17)|[✓](src/main/codyssi17.py)|
 |[18](https://www.codyssi.com/view_problem_18)|[✓](src/main/codyssi18.py)|
-|[19](https://www.codyssi.com/view_problem_19)||
+|[19](https://www.codyssi.com/view_problem_19)|[✓](src/main/codyssi19.py)|
 |[20](https://www.codyssi.com/view_problem_20)||
 <!-- @END:Problems -->
