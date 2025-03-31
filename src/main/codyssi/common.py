@@ -13,6 +13,7 @@ from typing import NamedTuple
 from typing import TypeVar
 from typing import cast
 
+import pyperclip
 from prettyprinter import cpprint
 
 import codyssi.memo as memo
@@ -125,6 +126,12 @@ class SolutionBase(ABC, Generic[OUTPUT1, OUTPUT2, OUTPUT3]):
             if result.no_input:
                 print(f"Part {part}: == NO INPUT FOUND ==")
             else:
+                if (
+                    result.answer is not None
+                    and result.answer != ""
+                    and result.answer != 0
+                ):
+                    pyperclip.copy(str(result.answer))
                 answer = fmt_answer(result.answer)
                 duration = fmt_duration(result.duration_as_ms)
                 print(f"Part {part}: {answer}, took {duration}")

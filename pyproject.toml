@@ -35,6 +35,10 @@ python_executable = "python"
 module = "prettyprinter.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "pyperclip.*"
+ignore_missing_imports = true
+
 [tool.vulture]
 exclude = [".venv"]
 min_confidence = 80
@@ -47,6 +51,7 @@ dev = [
     "flake8-pyproject>=1.2.3",
     "isort>=6.0.1",
     "mypy>=1.15.0",
+    "pyperclip>=1.9.0",
     "vulture>=2.14",
 ]
 
