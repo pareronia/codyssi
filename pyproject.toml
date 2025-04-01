@@ -56,4 +56,4 @@ dev = [
 ]
 
 [tool.codyssi.table]
-number_of_problems = 20
+number_of_problems = 22
