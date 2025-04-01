@@ -53,27 +53,24 @@ class Cube:
             for i in range(1, 7)
         }
         self.rotations = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
-        self.rotate_grid(6)
-        for _ in range(3):
-            self.rotate_grid(5)
+        self.rotate_grid_cw(6)
+        self.rotate_grid_ccw(5)
 
-    def rotate_x(self) -> None:
-        self.rotate_grid(self.left)
-        for _ in range(3):
-            self.rotate_grid(self.right)
+    def rotate_x_cw(self) -> None:
         self.front, self.top, self.right, self.bottom, self.left, self.back = (
-            self.bottom,
-            self.front,
-            self.right,
-            self.back,
-            self.left,
             self.top,
+            self.back,
+            self.right,
+            self.front,
+            self.left,
+            self.bottom,
         )
 
-    def rotate_y(self) -> None:
-        self.rotate_grid(self.bottom)
+    def rotate_x_ccw(self) -> None:
         for _ in range(3):
-            self.rotate_grid(self.top)
+            self.rotate_x_cw()
+
+    def rotate_y_cw(self) -> None:
         self.front, self.top, self.right, self.bottom, self.left, self.back = (
             self.right,
             self.top,
@@ -83,8 +80,16 @@ class Cube:
             self.left,
         )
 
-    def rotate_grid(self, idx: int) -> None:
+    def rotate_y_ccw(self) -> None:
+        for _ in range(3):
+            self.rotate_y_cw()
+
+    def rotate_grid_cw(self, idx: int) -> None:
         self.rotations[idx] = (self.rotations[idx] + 1) % 4
+
+    def rotate_grid_ccw(self, idx: int) -> None:
+        for _ in range(3):
+            self.rotate_grid_cw(idx)
 
     def add_face(self, val: int) -> None:
         for r in range(self.size):
@@ -117,7 +122,7 @@ class Cube:
             case 1:
                 self.do_add_row(col, val)
             case 2:
-                self.do_add_row(self.size - 1 - col, val)
+                self.do_add_col(self.size - 1 - col, val)
             case 3:
                 self.do_add_row(self.size - 1 - col, val)
 
@@ -156,15 +161,13 @@ class Solution(SolutionBase[Output1, Output2, Output3]):
                     cube.add_row(row, val)
             match rotation:
                 case "L":
-                    for _ in range(3):
-                        cube.rotate_y()
+                    cube.rotate_y_ccw()
                 case "R":
-                    cube.rotate_y()
+                    cube.rotate_y_cw()
                 case "D":
-                    for _ in range(3):
-                        cube.rotate_x()
+                    cube.rotate_x_ccw()
                 case "U":
-                    cube.rotate_x()
+                    cube.rotate_x_cw()
         return prod(sorted(absorptions.values())[-2:])
 
     def part_1(self, input: InputData) -> Output1:
@@ -193,15 +196,21 @@ class Solution(SolutionBase[Output1, Output2, Output3]):
                     cube.add_row(row, val)
             match rotation:
                 case "L":
-                    for _ in range(3):
-                        cube.rotate_y()
+                    cube.rotate_grid_cw(cube.bottom)
+                    cube.rotate_grid_ccw(cube.top)
+                    cube.rotate_y_ccw()
                 case "R":
-                    cube.rotate_y()
+                    cube.rotate_grid_cw(cube.top)
+                    cube.rotate_grid_ccw(cube.bottom)
+                    cube.rotate_y_cw()
                 case "D":
-                    cube.rotate_x()
+                    cube.rotate_grid_cw(cube.right)
+                    cube.rotate_grid_ccw(cube.left)
+                    cube.rotate_x_ccw()
                 case "U":
-                    for _ in range(3):
-                        cube.rotate_x()
+                    cube.rotate_grid_cw(cube.left)
+                    cube.rotate_grid_ccw(cube.right)
+                    cube.rotate_x_cw()
         # log(cube)
         ans = prod(
             max(
