@@ -1,4 +1,5 @@
 import sys
+from functools import cache
 
 from codyssi.common import InputData
 from codyssi.common import SolutionBase
@@ -37,25 +38,25 @@ class Solution(SolutionBase[Output1, Output2, Output3]):
         return items
 
     def solve(self, items: list[Item], target: int) -> int:
-        dp = [[(0, 0)] * (target + 1) for _ in range(len(items) + 1)]
-        for i, item in enumerate(items, start=1):
-            qual, cost, mat = item
-            for j in range(target + 1):
-                if cost <= j:
-                    prev = dp[i - 1][j - cost]
-                    dp[i][j] = max(
-                        dp[i - 1][j],
-                        (prev[0] + qual, prev[1] - mat),
-                    )
-                else:
-                    dp[i][j] = dp[i - 1][j]
-        best = []
-        j = target
-        for i in range(len(items), 0, -1):
-            if dp[i][j] != dp[i - 1][j]:
-                best.append(items[i - 1])
-                j -= items[i - 1][1]
-        return sum(q for q, _, _ in best) * sum(m for _, _, m in best)
+        @cache
+        def get(i: int, cost: int) -> tuple[int, int]:
+            if cost == 0:
+                return (0, 0)
+            qual, mat = 0, 0
+            for j in range(i, len(items)):
+                if items[j][1] <= cost:
+                    res = get(j + 1, cost - items[j][1])
+                    nqual = res[0] + items[j][0]
+                    nmat = res[1] + items[j][2]
+                    if nqual > qual:
+                        qual = nqual
+                        mat = nmat
+                    elif nqual == qual:
+                        mat = min(mat, nmat)
+            return (qual, mat)
+
+        qual, mat = get(0, target)
+        return qual * mat
 
     def part_1(self, input: InputData) -> Output1:
         return sum(
