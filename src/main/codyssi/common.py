@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 from abc import ABC
 from abc import abstractmethod
@@ -58,6 +59,9 @@ class Problem:
     def get_input(self) -> tuple[str, ...] | None:
         return memo.get_input(self.problem)
 
+    def get_answer(self, part: int) -> str | None:
+        return memo.get_answer(self.problem, part)
+
 
 class SolutionBase(ABC, Generic[OUTPUT1, OUTPUT2, OUTPUT3]):
     @unique
@@ -115,12 +119,18 @@ class SolutionBase(ABC, Generic[OUTPUT1, OUTPUT2, OUTPUT3]):
                 part, answer, int((time.time() - start) * 1e9)
             )
 
+    def check_answer(self, part: SolutionBase.PartExecution) -> str | None:
+        if part.no_input:
+            return None
+        return self.problem.get_answer(int(part.part.value))
+
     def run(self, main_args: list[str]) -> None:  # noqa E103
         print()
         print(fmt_title(self.problem.problem))
         print()
         if __debug__:
             self.samples()
+        fails = []
         for part in SolutionBase.Part:
             result = self.run_part(part)
             if result.no_input:
@@ -135,9 +145,18 @@ class SolutionBase(ABC, Generic[OUTPUT1, OUTPUT2, OUTPUT3]):
                         pyperclip.copy(str(result.answer))
                     except pyperclip.PyperclipException:
                         pass
+                    expected = self.check_answer(result)
+                    if expected is not None and str(result.answer) != expected:
+                        fails.append(
+                            f"Part {result.part}: Expected:"
+                            + f" '{expected}', got: '{result.answer}'"
+                        )
                 answer = fmt_answer(result.answer)
                 duration = fmt_duration(result.duration_as_ms)
                 print(f"Part {part}: {answer}, took {duration}")
+        message = os.linesep.join(fails)
+        if message.strip() != "":
+            raise AssertionError(os.linesep + message)
 
 
 F = TypeVar("F", bound=Callable[..., Any])

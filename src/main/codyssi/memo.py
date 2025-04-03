@@ -35,7 +35,7 @@ def get_memo_dir() -> str:
 
 
 def get_input_file(problem: int) -> str:
-    return os.path.join(get_memo_dir(), f"view_problem_{problem}_input")
+    return os.path.join(get_memo_dir(), f"{problem:>02}_input.txt")
 
 
 def get_input(problem: int) -> tuple[str, ...] | None:
@@ -43,6 +43,20 @@ def get_input(problem: int) -> tuple[str, ...] | None:
     if not os.path.exists(file):
         return None
     return tuple(_ for _ in read_lines_from_file(file))
+
+
+def get_answer_file(problem: int, part: int) -> str:
+    return os.path.join(get_memo_dir(), f"{problem:>02}_{part}_answer.txt")
+
+
+def get_answer(problem: int, part: int) -> str | None:
+    file = get_answer_file(problem, part)
+    if not os.path.exists(file):
+        return None
+    lines = read_lines_from_file(file)
+    if len(lines) == 0:
+        return None
+    return lines[0]
 
 
 def read_lines_from_file(file: str) -> list[str]:
