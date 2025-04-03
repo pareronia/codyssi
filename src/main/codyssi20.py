@@ -1,5 +1,8 @@
 import itertools
 import sys
+from enum import Enum
+from enum import auto
+from enum import unique
 from math import prod
 
 from prettyprinter import pretty_call
@@ -7,7 +10,6 @@ from prettyprinter import register_pretty
 
 from codyssi.common import InputData
 from codyssi.common import SolutionBase
-from codyssi.common import clog
 from codyssi.common import to_blocks
 
 TEST1 = """\
@@ -127,14 +129,12 @@ class Cube:
             self.grids[front][row][col] -= 100
 
     def add_face(self, val: int) -> None:
-        self.absorptions[self.current[0]] += val * self.size * self.size
         for r in range(self.size):
             for c in range(self.size):
                 self.add(r, c, val)
 
     def add_row(self, row: int, val: int) -> None:
         front, rotations = self.current
-        self.absorptions[front] += val * self.size
         match rotations:
             case 0:
                 self.do_add_row(row, val)
@@ -199,8 +199,58 @@ def pretty_cube(value, ctx):  # type:ignore
     return pretty_call(ctx, Cube, front=value.front, grids=value.grids)
 
 
+@unique
+class Mode(Enum):
+    MODE_1 = auto()
+    MODE_2 = auto()
+    MODE_3 = auto()
+
+    def face(self, cube: Cube, val: int) -> None:
+        match self:
+            case Mode.MODE_1:
+                cube.absorptions[cube.current[0]] += (
+                    val * cube.size * cube.size
+                )
+            case Mode.MODE_2 | Mode.MODE_3:
+                cube.add_face(val)
+
+    def row(self, cube: Cube, row: int, val: int) -> None:
+        match self:
+            case Mode.MODE_1:
+                cube.absorptions[cube.current[0]] += val * cube.size
+            case Mode.MODE_2:
+                cube.add_row(row, val)
+            case Mode.MODE_3:
+                cube.add_row(row, val)
+                for _ in range(3):
+                    cube.current = TWISTS[cube.current[0]][cube.current[1]][R]
+                    cube.add_row(row, val)
+                cube.current = TWISTS[cube.current[0]][cube.current[1]][R]
+
+    def col(self, cube: Cube, col: int, val: int) -> None:
+        match self:
+            case Mode.MODE_1:
+                cube.absorptions[cube.current[0]] += val * cube.size
+            case Mode.MODE_2:
+                cube.add_col(col, val)
+            case Mode.MODE_3:
+                cube.add_col(col, val)
+                for _ in range(3):
+                    cube.current = TWISTS[cube.current[0]][cube.current[1]][U]
+                    cube.add_col(col, val)
+                cube.current = TWISTS[cube.current[0]][cube.current[1]][U]
+
+    def ans(self, cube: Cube) -> int:
+        match self:
+            case Mode.MODE_1:
+                return prod(sorted(cube.absorptions.values())[-2:])
+            case Mode.MODE_2 | Mode.MODE_3:
+                return prod(cube.dominant_sum(idx) for idx in range(1, 7))
+
+
 class Solution(SolutionBase[Output1, Output2, Output3]):
-    def solve(self, input: InputData, cube: Cube) -> None:
+    def solve(self, input: InputData, size: int, mode: Mode) -> int:
+        cube = Cube(size)
         blocks = to_blocks(input)
         for line, rotation in itertools.zip_longest(blocks[0], blocks[1][0]):
             left, right = line.split(" - ")
@@ -208,36 +258,36 @@ class Solution(SolutionBase[Output1, Output2, Output3]):
             val = int(right.split()[-1])
             match target:
                 case "FACE":
-                    cube.add_face(val)
+                    mode.face(cube, val)
                 case "COL":
                     col = int(left.split()[1]) - 1
-                    cube.add_col(col, val)
+                    mode.col(cube, col, val)
                 case "ROW":
                     row = int(left.split()[1]) - 1
-                    cube.add_row(row, val)
-            clog(lambda: cube.log_line(line, rotation))
+                    mode.row(cube, row, val)
+            # clog(lambda: cube.log_line(line, rotation))
             if rotation is not None:
                 front, rotations = cube.current
                 cube.current = TWISTS[front][rotations][rotation]
+        return mode.ans(cube)
 
     def solve_1(self, input: InputData, size: int) -> Output1:
-        cube = Cube(size)
-        self.solve(input, cube)
-        return prod(sorted(cube.absorptions.values())[-2:])
+        return self.solve(input, size, Mode.MODE_1)
 
     def part_1(self, input: InputData) -> Output1:
-        return self.solve_1(input, 80)
+        return self.solve_1(input, size=80)
 
     def solve_2(self, input: InputData, size: int) -> Output2:
-        cube = Cube(size)
-        self.solve(input, cube)
-        return prod(cube.dominant_sum(idx) for idx in range(1, 7))
+        return self.solve(input, size, Mode.MODE_2)
 
     def part_2(self, input: InputData) -> Output2:
-        return self.solve_2(input, 80)
+        return self.solve_2(input, size=80)
+
+    def solve_3(self, input: InputData, size: int) -> Output3:
+        return self.solve(input, size, Mode.MODE_3)
 
     def part_3(self, input: InputData) -> Output3:
-        return 0
+        return self.solve_3(input, size=80)
 
     def samples(self) -> None:
         assert (
@@ -251,7 +301,11 @@ class Solution(SolutionBase[Output1, Output2, Output3]):
             self.solve_2(tuple(TEST2.splitlines()), 80)
             == 369594451623936000000
         )
-        assert self.part_3(tuple(TEST1.splitlines())) == 0
+        assert self.solve_3(tuple(TEST1.splitlines()), 3) == 59477096746944
+        assert (
+            self.solve_3(tuple(TEST2.splitlines()), 80)
+            == 118479211258970523303936
+        )
 
 
 solution = Solution(20)
