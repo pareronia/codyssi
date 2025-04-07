@@ -26,5 +26,5 @@
 |[19](https://www.codyssi.com/view_problem_19)|[✓](src/main/codyssi19.py)|
 |[20](https://www.codyssi.com/view_problem_20)|[✓](src/main/codyssi20.py)|
 |[21](https://www.codyssi.com/view_problem_21)|[✓](src/main/codyssi21.py)|
-|[22](https://www.codyssi.com/view_problem_22)||
+|[22](https://www.codyssi.com/view_problem_22)|[✓](src/main/codyssi22.py)|
 <!-- @END:Problems -->
