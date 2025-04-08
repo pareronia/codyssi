@@ -47,6 +47,7 @@ def to_blocks(inputs: Iterable[str]) -> list[list[str]]:
 
 
 InputData = tuple[str, ...]
+INPUT = TypeVar("INPUT")
 OUTPUT1 = TypeVar("OUTPUT1", bound=str | int)
 OUTPUT2 = TypeVar("OUTPUT2", bound=str | int)
 OUTPUT3 = TypeVar("OUTPUT3", bound=str | int)
@@ -63,33 +64,36 @@ class Problem:
         return memo.get_answer(self.problem, part)
 
 
+@unique
+class Part(Enum):
+
+    PART_1 = "1"
+    PART_2 = "2"
+    PART_3 = "3"
+
+    def __str__(self) -> str:
+        return str(self._value_)
+
+
+class PartExecution(NamedTuple):
+    part: Part
+    answer: Any = None
+    duration: int = 0
+    no_input: bool = False
+
+    @property
+    def duration_as_ms(self) -> float:
+        return self.duration / 1_000_000
+
+
 class SolutionBase(ABC, Generic[OUTPUT1, OUTPUT2, OUTPUT3]):
-    @unique
-    class Part(Enum):
-
-        PART_1 = "1"
-        PART_2 = "2"
-        PART_3 = "3"
-
-        def __str__(self) -> str:
-            return str(self._value_)
-
-    class PartExecution(NamedTuple):
-        part: SolutionBase.Part
-        answer: Any = None
-        duration: int = 0
-        no_input: bool = False
-
-        @property
-        def duration_as_ms(self) -> float:
-            return self.duration / 1_000_000
 
     def __init__(self, problem: int):
         self.problem = Problem(problem)
         self.callables = {
-            SolutionBase.Part.PART_1: self.part_1,
-            SolutionBase.Part.PART_2: self.part_2,
-            SolutionBase.Part.PART_3: self.part_3,
+            Part.PART_1: self.part_1,
+            Part.PART_2: self.part_2,
+            Part.PART_3: self.part_3,
         }
 
     @abstractmethod
@@ -108,18 +112,18 @@ class SolutionBase(ABC, Generic[OUTPUT1, OUTPUT2, OUTPUT3]):
     def part_3(self, input: InputData) -> OUTPUT3:
         pass
 
-    def run_part(self, part: SolutionBase.Part) -> SolutionBase.PartExecution:
+    def run_part(self, part: Part) -> PartExecution:
         input = self.problem.get_input()
         if input is None:
-            return SolutionBase.PartExecution(part, no_input=True)
+            return PartExecution(part, no_input=True)
         else:
             start = time.time()
             answer = self.callables[part](input)
-            return SolutionBase.PartExecution(
+            return PartExecution(
                 part, answer, int((time.time() - start) * 1e9)
             )
 
-    def check_answer(self, part: SolutionBase.PartExecution) -> str | None:
+    def check_answer(self, part: PartExecution) -> str | None:
         if part.no_input:
             return None
         return self.problem.get_answer(int(part.part.value))
@@ -131,7 +135,7 @@ class SolutionBase(ABC, Generic[OUTPUT1, OUTPUT2, OUTPUT3]):
         if __debug__:
             self.samples()
         fails = []
-        for part in SolutionBase.Part:
+        for part in Part:
             result = self.run_part(part)
             if result.no_input:
                 print(f"Part {part}: == NO INPUT FOUND ==")
@@ -154,6 +158,81 @@ class SolutionBase(ABC, Generic[OUTPUT1, OUTPUT2, OUTPUT3]):
                 answer = fmt_answer(result.answer)
                 duration = fmt_duration(result.duration_as_ms)
                 print(f"Part {part}: {answer}, took {duration}")
+        message = os.linesep.join(fails)
+        if message.strip() != "":
+            raise AssertionError(os.linesep + message)
+
+
+class SolutionBase2(ABC, Generic[INPUT, OUTPUT1, OUTPUT2, OUTPUT3]):
+
+    def __init__(self, problem: int):
+        self.problem = Problem(problem)
+        self.callables = {
+            Part.PART_1: self.part_1,
+            Part.PART_2: self.part_2,
+            Part.PART_3: self.part_3,
+        }
+
+    @abstractmethod
+    def parse_input(self, input: InputData) -> INPUT:
+        pass
+
+    @abstractmethod
+    def samples(self) -> None:
+        pass
+
+    @abstractmethod
+    def part_1(self, input: INPUT) -> OUTPUT1:
+        pass
+
+    @abstractmethod
+    def part_2(self, input: INPUT) -> OUTPUT2:
+        pass
+
+    @abstractmethod
+    def part_3(self, input: INPUT) -> OUTPUT3:
+        pass
+
+    def run_part(self, part: Part, input: INPUT) -> PartExecution:
+        start = time.time()
+        answer = self.callables[part](input)
+        return PartExecution(part, answer, int((time.time() - start) * 1e9))
+
+    def check_answer(self, part: PartExecution) -> str | None:
+        return self.problem.get_answer(int(part.part.value))
+
+    def run(self, main_args: list[str]) -> None:  # noqa E103
+        print()
+        print(fmt_title(self.problem.problem))
+        print()
+        if __debug__:
+            self.samples()
+        fails = []
+        input_data = self.problem.get_input()
+        if input_data is None:
+            print("== NO INPUT FOUND ==")
+            return
+        input = self.parse_input(input_data)
+        for part in Part:
+            result = self.run_part(part, input)
+            if (
+                result.answer is not None
+                and result.answer != ""
+                and result.answer != 0
+            ):
+                try:
+                    pyperclip.copy(str(result.answer))
+                except pyperclip.PyperclipException:
+                    pass
+                expected = self.check_answer(result)
+                if expected is not None and str(result.answer) != expected:
+                    fails.append(
+                        f"Part {result.part}: Expected:"
+                        + f" '{expected}', got: '{result.answer}'"
+                    )
+            answer = fmt_answer(result.answer)
+            duration = fmt_duration(result.duration_as_ms)
+            print(f"Part {part}: {answer}, took {duration}")
         message = os.linesep.join(fails)
         if message.strip() != "":
             raise AssertionError(os.linesep + message)

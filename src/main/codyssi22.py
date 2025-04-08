@@ -4,8 +4,7 @@ import sys
 from collections import deque
 
 from codyssi.common import InputData
-from codyssi.common import SolutionBase
-from codyssi.common import codyssi_samples
+from codyssi.common import SolutionBase2
 
 TEST1 = """\
 RULE 1: 8x+2y+3z+5a DIVIDE 9 HAS REMAINDER 4 | DEBRIS VELOCITY (0, -1, 0, 1)
@@ -24,10 +23,14 @@ RULE 7: 7x+4y+3z+7a DIVIDE 11 HAS REMAINDER 5 | DEBRIS VELOCITY (0, 1, 0, -1)
 RULE 8: 3x+6y+9z+9a DIVIDE 5 HAS REMAINDER 3 | DEBRIS VELOCITY (1, 1, -1, -1)
 """
 
+Position = tuple[int, int, int, int]
+Debris = list[tuple[Position, Position]]
+Debrises = list[list[list[list[list[int]]]]]
+Space = tuple[Position, Position]
+Input = tuple[Debris, Debrises]
 Output1 = int
 Output2 = int
 Output3 = int
-Position = tuple[int, int, int, int]
 DIRS = {
     (0, 0, 0),
     (1, 0, 0),
@@ -37,31 +40,26 @@ DIRS = {
     (0, 0, 1),
     (0, 0, -1),
 }
+START = (0, 0, 0, 0)
+SAMPLE_EXIT = (2, 2, 4, 0)
+EXIT = (9, 14, 59, 0)
+SAMPLE_SPACE = ((0, 0, 0, -1), (2, 2, 4, 1))
+SPACE = ((0, 0, 0, -1), (9, 14, 59, 1))
 
 
-class Solution(SolutionBase[Output1, Output2, Output3]):
-    def get_debris(
-        self,
-        input: InputData,
-        range_from: Position,
-        range_to: Position,
-    ) -> list[tuple[Position, Position]]:
-        mx, my, mz, ma = range_from
-        nx, ny, nz, na = range_to
-        ans = list[tuple[Position, Position]]()
+class Solution(SolutionBase2[Input, Output1, Output2, Output3]):
+    def get_debris(self, input: InputData, space: Space) -> Debris:
+        ans = Debris()
         for x, y, z, a in itertools.product(
-            range(mx, nx + 1),
-            range(my, ny + 1),
-            range(mz, nz + 1),
-            range(ma, na + 1),
+            range(space[0][0], space[1][0] + 1),
+            range(space[0][1], space[1][1] + 1),
+            range(space[0][2], space[1][2] + 1),
+            range(space[0][3], space[1][3] + 1),
         ):
             for line in input:
                 _, _, eq, _, div, _, _, mod, *rest = line.split()
-                eq = eq.replace("x", f"*{x}")
-                eq = eq.replace("y", f"*{y}")
-                eq = eq.replace("z", f"*{z}")
-                eq = eq.replace("a", f"*{a}")
-                if divmod(eval(eq), int(div))[1] == int(mod):  # nosec
+                fx, fy, fz, fa = map(lambda sp: int(sp[:-1]), eq.split("+"))
+                if (fx * x + fy * y + fz * z + fa * a) % int(div) == int(mod):
                     vx, vy, vz, va = map(
                         int,
                         line.partition("(")[2].rpartition(")")[0].split(", "),
@@ -69,180 +67,114 @@ class Solution(SolutionBase[Output1, Output2, Output3]):
                     ans.append(((x, y, z, a), (vx, vy, vz, va)))
         return ans
 
-    def solve_2(
-        self,
-        debris: list[tuple[Position, Position]],
-        range_from: Position,
-        range_to: Position,
-        exit: Position,
-    ) -> int:
-        range_x = range_to[0] - range_from[0] + 1
-        range_y = range_to[1] - range_from[1] + 1
-        range_z = range_to[2] - range_from[2] + 1
-        range_a = range_to[3] - range_from[3] + 1
+    def get_debrises(self, debris: Debris, space: Space) -> Debrises:
+        range_x = space[1][0] - space[0][0] + 1
+        range_y = space[1][1] - space[0][1] + 1
+        range_z = space[1][2] - space[0][2] + 1
+        range_a = space[1][3] - space[0][3] + 1
         period = math.lcm(range_x, range_y, range_z, range_a)
         debrises = [
             [
                 [
-                    [[False for _ in range(period)] for _ in range(range_a)]
-                    for _ in range(range_z)
+                    [[0 for _ in range(period)] for _ in range(range_z)]
+                    for _ in range(range_y)
                 ]
-                for _ in range(range_y)
+                for _ in range(range_x)
             ]
-            for _ in range(range_x)
+            for _ in range(range_a)
         ]
         for i in range(period):
             for d, v in debris:
                 x, y, z, a = d
                 dx, dy, dz, da = v
-                xx = divmod(x + i * dx, range_x)[1]
-                yy = divmod(y + i * dy, range_y)[1]
-                zz = divmod(z + i * dz, range_z)[1]
+                xx = (x + i * dx) % range_x
+                yy = (y + i * dy) % range_y
+                zz = (z + i * dz) % range_z
                 aa = divmod(a + i * da, range_a)[1]
-                debrises[xx][yy][zz][aa][i] = True
-        q = deque[tuple[Position, int]]()
-        q.append(((0, 0, 0, 0), 0))
-        seen = set[tuple[Position, int]]()
-        time = -1
-        while q:
-            p, t = q.popleft()
-            if p == exit:
-                return t
-            if time < t:
-                time = t
-                seen.clear()
-            nxt_t = t + 1
-            x, y, z, a = p
-            for dx, dy, dz in DIRS:
-                nx, ny, nz, na = x + dx, y + dy, z + dz, a
-                if (
-                    range_from[0] <= nx <= range_to[0]
-                    and range_from[1] <= ny <= range_to[1]
-                    and range_from[2] <= nz <= range_to[2]
-                    and not debrises[nx][ny][nz][divmod(na, range_a)[1]][
-                        nxt_t % period
-                    ]
-                    or (nx, ny, nz, na) == (0, 0, 0, 0)
-                ):
-                    nxt = ((nx, ny, nz, na), nxt_t)
-                    if nxt not in seen:
-                        seen.add(nxt)
-                        q.append(nxt)
-        raise RuntimeError
+                debrises[aa][xx][yy][zz][i] += 1
+        return debrises
 
-    def solve_3(
+    def get_lowest_duration(
         self,
-        debris: list[tuple[Position, Position]],
-        range_from: Position,
-        range_to: Position,
+        debrises: Debrises,
+        space: Space,
         exit: Position,
+        acceptable_hits: int,
     ) -> int:
-        range_x = range_to[0] - range_from[0] + 1
-        range_y = range_to[1] - range_from[1] + 1
-        range_z = range_to[2] - range_from[2] + 1
-        range_a = range_to[3] - range_from[3] + 1
-        period = math.lcm(range_x, range_y, range_z, range_a)
-        debrises = [
-            [
-                [
-                    [[0 for _ in range(period)] for _ in range(range_a)]
-                    for _ in range(range_z)
-                ]
-                for _ in range(range_y)
-            ]
-            for _ in range(range_x)
-        ]
-        for i in range(period):
-            for d, v in debris:
-                x, y, z, a = d
-                dx, dy, dz, da = v
-                xx = divmod(x + i * dx, range_x)[1]
-                yy = divmod(y + i * dy, range_y)[1]
-                zz = divmod(z + i * dz, range_z)[1]
-                aa = divmod(a + i * da, range_a)[1]
-                debrises[xx][yy][zz][aa][i] += 1
-        q = deque[tuple[Position, int, int]]()
-        q.append(((0, 0, 0, 0), 0, 0))
-        seen = set[tuple[Position, int, int]]()
+        period = len(debrises[0][0][0][0])
+        start, end = START[:3], exit[:3]
+        min_x, max_x = space[0][0], space[1][0]
+        min_y, max_y = space[0][1], space[1][1]
+        min_z, max_z = space[0][2], space[1][2]
+        q = deque[tuple[tuple[int, int, int], int, int]]()
+        q.append(((start), 0, 0))
+        seen = set[tuple[tuple[int, int, int], int, int]]()
         time = -1
         while q:
             p, t, h = q.popleft()
-            if p == exit:
+            if p == end:
                 return t
             if time < t:
                 time = t
                 seen.clear()
             nxt_t = t + 1
-            x, y, z, a = p
+            x, y, z = p
             for dx, dy, dz in DIRS:
-                nx, ny, nz, na = x + dx, y + dy, z + dz, a
+                nx, ny, nz = x + dx, y + dy, z + dz
                 if (
-                    range_from[0] <= nx <= range_to[0]
-                    and range_from[1] <= ny <= range_to[1]
-                    and range_from[2] <= nz <= range_to[2]
-                    and h
-                    + debrises[nx][ny][nz][divmod(na, range_a)[1]][
-                        nxt_t % period
-                    ]
-                    <= 3
-                    or (nx, ny, nz, na) == (0, 0, 0, 0)
+                    min_x <= nx <= max_x
+                    and min_y <= ny <= max_y
+                    and min_z <= nz <= max_z
                 ):
-                    if (nx, ny, nz, na) == (0, 0, 0, 0):
-                        nxt = ((0, 0, 0, 0), nxt_t, h)
+                    if (nx, ny, nz) == start:
+                        nxt = (start, nxt_t, h)
                     else:
-                        nxt = (
-                            (nx, ny, nz, na),
-                            nxt_t,
-                            h
-                            + debrises[nx][ny][nz][divmod(na, range_a)[1]][
-                                nxt_t % period
-                            ],
-                        )
+                        nxt_h = h + debrises[0][nx][ny][nz][nxt_t % period]
+                        if nxt_h > acceptable_hits:
+                            continue
+                        nxt = ((nx, ny, nz), nxt_t, nxt_h)
                     if nxt not in seen:
                         seen.add(nxt)
                         q.append(nxt)
         raise RuntimeError
 
-    def sample_1(self, input: InputData) -> Output1:
-        debris = self.get_debris(input, (0, 0, 0, -1), (2, 2, 4, 1))
+    def parse_input(self, input: InputData) -> Input:
+        debris = self.get_debris(input, SPACE)
+        return debris, self.get_debrises(debris, SPACE)
+
+    def solve_1(self, debris: Debris, space: Space) -> int:
         return len(debris)
 
-    def sample_2(self, input: InputData) -> Output2:
-        debris = self.get_debris(input, (0, 0, 0, -1), (2, 2, 4, 1))
-        return self.solve_2(debris, (0, 0, 0, -1), (2, 2, 4, 1), (2, 2, 4, 0))
-
-    def sample_3(self, input: InputData) -> Output2:
-        debris = self.get_debris(input, (0, 0, 0, -1), (2, 2, 4, 1))
-        return self.solve_3(debris, (0, 0, 0, -1), (2, 2, 4, 1), (2, 2, 4, 0))
-
-    def part_1(self, input: InputData) -> Output1:
-        debris = self.get_debris(input, (0, 0, 0, -1), (9, 14, 59, 1))
-        return len(debris)
-
-    def part_2(self, input: InputData) -> Output2:
-        debris = self.get_debris(input, (0, 0, 0, -1), (9, 14, 59, 1))
-        return self.solve_2(
-            debris, (0, 0, 0, -1), (9, 14, 59, 1), (9, 14, 59, 0)
+    def solve_2(self, debrises: Debrises, space: Space, exit: Position) -> int:
+        return self.get_lowest_duration(
+            debrises, space, exit, acceptable_hits=0
         )
 
-    def part_3(self, input: InputData) -> Output3:
-        debris = self.get_debris(input, (0, 0, 0, -1), (9, 14, 59, 1))
-        return self.solve_3(
-            debris, (0, 0, 0, -1), (9, 14, 59, 1), (9, 14, 59, 0)
+    def solve_3(self, debrises: Debrises, space: Space, exit: Position) -> int:
+        return self.get_lowest_duration(
+            debrises, space, exit, acceptable_hits=3
         )
 
-    @codyssi_samples(
-        (
-            ("sample_1", TEST1, 146),
-            ("part_1", TEST2, 32545),
-            ("sample_2", TEST1, 23),
-            ("part_2", TEST2, 217),
-            ("sample_3", TEST1, 8),
-            ("part_3", TEST2, 166),
-        )
-    )
+    def part_1(self, input: Input) -> Output1:
+        return self.solve_1(input[0], SPACE)
+
+    def part_2(self, input: Input) -> Output2:
+        return self.solve_2(input[1], SPACE, EXIT)
+
+    def part_3(self, input: Input) -> Output3:
+        return self.solve_3(input[1], SPACE, EXIT)
+
     def samples(self) -> None:
-        pass
+        debris = self.get_debris(tuple(TEST1.splitlines()), SAMPLE_SPACE)
+        debrises = self.get_debrises(debris, SAMPLE_SPACE)
+        assert self.solve_1(debris, SAMPLE_SPACE) == 146
+        assert self.solve_2(debrises, SAMPLE_SPACE, SAMPLE_EXIT) == 23
+        assert self.solve_3(debrises, SAMPLE_SPACE, SAMPLE_EXIT) == 8
+        debris = self.get_debris(tuple(TEST2.splitlines()), SPACE)
+        debrises = self.get_debrises(debris, SPACE)
+        assert self.solve_1(debris, SPACE) == 32545
+        assert self.solve_2(debrises, SPACE, EXIT) == 217
+        assert self.solve_3(debrises, SPACE, EXIT) == 166
 
 
 solution = Solution(22)

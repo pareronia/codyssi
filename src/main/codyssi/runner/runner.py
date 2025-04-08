@@ -1,11 +1,14 @@
 import importlib
+import time
 import types
 from argparse import ArgumentParser
 
+from ..common import Part
+from ..common import PartExecution
+from ..common import SolutionBase2
 from ..format import fmt_answer
 from ..format import fmt_duration
 from ..format import fmt_title
-from ..common import SolutionBase
 
 
 def get_module(problem: int) -> types.ModuleType | None:
@@ -16,11 +19,28 @@ def get_module(problem: int) -> types.ModuleType | None:
 
 
 def run(day_mod: types.ModuleType) -> None:
-    results = [day_mod.solution.run_part(part) for part in SolutionBase.Part]
+    if isinstance(day_mod.solution, SolutionBase2):
+        input_data = day_mod.solution.problem.get_input()
+        if input_data is None:
+            results = [
+                PartExecution(Part.PART_1, None, 0, True),
+                PartExecution(Part.PART_2, None, 0, True),
+                PartExecution(Part.PART_3, None, 0, True),
+            ]
+        else:
+            start = time.time()
+            input = day_mod.solution.parse_input(input_data)
+            duration_input = int((time.time() - start) * 1_000)
+            results = [day_mod.solution.run_part(part, input) for part in Part]
+    else:
+        duration_input = 0
+        results = [day_mod.solution.run_part(part) for part in Part]
     title = fmt_title(day_mod.solution.problem.problem)
     answers = " | ".join((fmt_answer(result.answer) for result in results))
-    time = fmt_duration(sum(result.duration_as_ms for result in results))
-    print(f"{title} : {answers} ({time})")
+    duration = fmt_duration(
+        duration_input + sum(result.duration_as_ms for result in results)
+    )
+    print(f"{title} : {answers} ({duration})")
 
 
 def main(_main_args: list[str]) -> None:
